@@ -1,4 +1,3 @@
-/// <reference path="../external/typings/angularjs/angular.d.ts"/>
 "use strict";
 var TrNgGrid;
 (function (TrNgGrid) {
@@ -316,8 +315,10 @@ var TrNgGrid;
                 totalItems: null,
                 enableFiltering: true,
                 enableSorting: true,
-                selectionMode: SelectionMode[2 /* MultiRow */],
-                onDataRequiredDelay: 1000
+                selectionMode: SelectionMode[3 /* MultiRowWithKeyModifiers */],
+                onDataRequiredDelay: 1000,
+                noItemsText: "No items to display",
+                isLoading: false
             };
             this.gridOptions.onDataRequired = $attrs["onDataRequired"] ? $isolatedScope["onDataRequired"] : null;
             this.gridOptions.gridColumnDefs = [];
@@ -604,7 +605,7 @@ var TrNgGrid;
 
             this.gridOptions.gridColumnDefs = finalPartialGridColumnDefs;
             var headerElement = this.templatedHeader.configureSection(gridElement, finalPartialGridColumnDefs);
-            var footerElement = this.templatedFooter.configureSection(gridElement, templatedFooterPartialGridColumnDefs);
+            //var footerElement = this.templatedFooter.configureSection(gridElement, templatedFooterPartialGridColumnDefs);
             var bodyElement = this.templatedBody.configureSection(gridElement, finalPartialGridColumnDefs);
 
             var templatedBodyRowElement = this.templatedBody.getTemplatedRowElement(bodyElement);
@@ -624,8 +625,44 @@ var TrNgGrid;
             templatedBodyRowElement.attr("ng-init", "gridItem=gridDisplayItem.$$_gridItem");
             templatedBodyRowElement.attr("ng-class", "{'" + TrNgGrid.rowSelectedCssClass + "':gridOptions.selectedItems.indexOf(gridItem)>=0}");
 
+
+            // CUSTOM CODE 
+            //
+            // wrap table content
+            gridElement.wrap("<div class='tr-ng-grid-container'></div>");
+
+            // move TFOOT content above the table
+            var html = '<span ' + cellFooterTemplateDirectiveAttribute + '=""></span>';
+            var prefix = this.$compile(html)(scope);
+            prefix.insertBefore(gridElement);
+
+            // body customizations
+            var colSpanValue = scope.gridOptions.gridColumnDefs.length;
+            angular.element(
+                "<tr ng-show='gridOptions.isLoading === false && gridOptions.items.length==0'>" +
+                "  <td class='no-items-info-cell' colspan=" + colSpanValue + ">" +
+                "    {{gridOptions.noItemsText}}" +
+                "  </td>" +
+                "</tr>").insertBefore(templatedBodyRowElement);
+
+            angular.element(
+                "<tr ng-show='gridOptions.isLoading'>" +
+                "  <td class='loading-animation-cell' colspan=" + colSpanValue + ">" +
+                "    <i class='fa fa-cog fa-spin'></i>" +
+                "    <span>Loading ...</span>" +
+                "  </td>" +
+                "</tr>").insertBefore(templatedBodyRowElement);
+
+            angular.element(
+                "<tr ng-show='filteredItems.length === 0 && gridOptions.items.length > 0'>" +
+                "  <td class='no-items-info-cell' colspan=" + colSpanValue + ">" +
+                "    No items match filter criteria" +
+                "  </td>" +
+                "</tr>").insertBefore(templatedBodyRowElement);
+            // .CUSTOM CODE
+
             headerElement.replaceWith(this.$compile(headerElement)(scope));
-            footerElement.replaceWith(this.$compile(footerElement)(scope));
+            //footerElement.replaceWith(this.$compile(footerElement)(scope));
             bodyElement.replaceWith(this.$compile(bodyElement)(scope));
 
             if (oldScope) {
@@ -857,7 +894,9 @@ var TrNgGrid;
                 locale: '@',
                 onDataRequired: '&',
                 onDataRequiredDelay: '=?',
-                fields: '=?'
+                fields: '=?',
+                noItemsText: '@?',
+                isLoading: '=?'
             },
             template: function (templateElement, tAttrs) {
                 templateElement.addClass(TrNgGrid.tableCssClass);
@@ -956,6 +995,7 @@ var TrNgGrid;
 
                             // create a clone of the default column options
                             var columnOptions = angular.extend(scope.gridOptions.gridColumnDefs[columnIndex], TrNgGrid.defaultColumnOptions);
+
 
                             // now match and observe the attributes
                             controller.linkAttrs(tAttrs, columnOptions);
@@ -1176,7 +1216,7 @@ var TrNgGrid;
             return {
                 restrict: 'A',
                 scope: true,
-                require: '^' + tableDirective,
+                //require: '^' + tableDirective,
                 templateUrl: TrNgGrid.footerPagerTemplateId,
                 replace: true,
                 compile: function (templateElement, tAttrs) {
@@ -1261,7 +1301,7 @@ var TrNgGrid;
                 return translatedText;
             };
         }]).run(function () {
-            TrNgGrid.tableCssClass = "tr-ng-grid table table-bordered table-hover"; // at the time of coding, table-striped is not working properly with selection
+            TrNgGrid.tableCssClass = "tr-ng-grid table table-bordered table-hover table-striped";
             TrNgGrid.cellCssClass = "tr-ng-cell";
             TrNgGrid.headerCellCssClass = "tr-ng-column-header " + TrNgGrid.cellCssClass;
             TrNgGrid.bodyCellCssClass = TrNgGrid.cellCssClass;
@@ -1270,17 +1310,18 @@ var TrNgGrid;
             TrNgGrid.columnFilterCssClass = "tr-ng-column-filter";
             TrNgGrid.columnFilterInputWrapperCssClass = "";
             TrNgGrid.columnSortActiveCssClass = "tr-ng-sort-active text-info";
-            TrNgGrid.columnSortInactiveCssClass = "tr-ng-sort-inactive text-muted glyphicon glyphicon-chevron-down";
-            TrNgGrid.columnSortReverseOrderCssClass = "tr-ng-sort-order-reverse glyphicon glyphicon-chevron-down";
-            TrNgGrid.columnSortNormalOrderCssClass = "tr-ng-sort-order-normal glyphicon glyphicon-chevron-up";
+            TrNgGrid.columnSortInactiveCssClass = "tr-ng-sort-inactive text-muted glyphicon glyphicon-sort";
+            TrNgGrid.columnSortReverseOrderCssClass = "tr-ng-sort-order-reverse glyphicon glyphicon-sort-by-attributes-alt";
+            TrNgGrid.columnSortNormalOrderCssClass = "tr-ng-sort-order-normal glyphicon glyphicon-sort-by-attributes";
             TrNgGrid.rowSelectedCssClass = "active";
             TrNgGrid.footerCssClass = "tr-ng-grid-footer form-inline";
         }).run(function () {
             TrNgGrid.defaultColumnOptions.displayAlign = 'left';
-            TrNgGrid.defaultPagerMinifiedPageCountThreshold = 3;
+            TrNgGrid.defaultPagerMinifiedPageCountThreshold = 8;
         });
 
     function configureTemplates($templateCache) {
+        var ngElem;
         // set up default templates
         if (!$templateCache.get(TrNgGrid.cellHeaderTemplateId)) {
             $templateCache.put(TrNgGrid.cellHeaderTemplateId, '<div class="' + TrNgGrid.headerCellCssClass + '" ng-switch="isCustomized">' + '  <div ng-switch-when="true">' + '    <div ng-transclude=""></div>' + '  </div>' + '  <div ng-switch-default>' + '    <div class="' + TrNgGrid.columnTitleCssClass + '">' + '      {{columnTitle |' + TrNgGrid.translateFilter + ':gridOptions.locale}}' + '       <div ' + TrNgGrid.columnSortDirectiveAttribute + '=""></div>' + '    </div>' + '    <div ' + TrNgGrid.columnFilterDirectiveAttribute + '=""></div>' + '  </div>' + '</div>');
@@ -1289,20 +1330,75 @@ var TrNgGrid;
             $templateCache.put(TrNgGrid.cellBodyTemplateId, '<div ng-attr-class="' + TrNgGrid.bodyCellCssClass + ' text-{{columnOptions.displayAlign}}" ng-switch="isCustomized">' + '  <div ng-switch-when="true">' + '    <div ng-transclude=""></div>' + '  </div>' + '  <div ng-switch-default>{{gridDisplayItem[columnOptions.displayFieldName]}}</div>' + '</div>');
         }
         if (!$templateCache.get(TrNgGrid.columnFilterTemplateId)) {
-            $templateCache.put(TrNgGrid.columnFilterTemplateId, '<div ng-show="(gridOptions.enableFiltering&&columnOptions.enableFiltering!==false)||columnOptions.enableFiltering" class="' + TrNgGrid.columnFilterCssClass + '">' + ' <div class="' + TrNgGrid.columnFilterInputWrapperCssClass + '">' + '   <input class="form-control input-sm" type="text" ng-model="columnOptions.filter" ng-keypress="speedUpAsyncDataRetrieval($event)"></input>' + ' </div>' + '</div>');
+            ngElem = angular.element(
+                '<div ng-show="(gridOptions.enableFiltering&&columnOptions.enableFiltering!==false)||columnOptions.enableFiltering" class="' + TrNgGrid.columnFilterCssClass + '">' +
+                ' <div class="' + TrNgGrid.columnFilterInputWrapperCssClass + '">' +
+                '   <input class="form-control input-sm" type="text" ng-model="columnOptions.filter" ng-keypress="speedUpAsyncDataRetrieval($event)"></input>' +
+                ' </div>' +
+                '</div>');
+
+            // change default logic of ng-show to not show column filter until it is explicitly required
+            ngElem.attr("ng-show", "(gridOptions.enableFiltering&&columnOptions.enableFiltering===true)||columnOptions.enableFiltering");
+            $templateCache.put(TrNgGrid.columnFilterTemplateId, ngElem[0].outerHTML);
         }
         if (!$templateCache.get(TrNgGrid.columnSortTemplateId)) {
             $templateCache.put(TrNgGrid.columnSortTemplateId, '<div ng-attr-title="{{\'Sort\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}"' + ' ng-show="(gridOptions.enableSorting&&columnOptions.enableSorting!==false)||columnOptions.enableSorting"' + ' ng-click="toggleSorting(columnOptions.fieldName)"' + ' class="' + TrNgGrid.columnSortCssClass + '" > ' + '  <div ng-class="{\'' + TrNgGrid.columnSortActiveCssClass + '\':gridOptions.orderBy==columnOptions.fieldName,\'' + TrNgGrid.columnSortInactiveCssClass + '\':gridOptions.orderBy!=columnOptions.fieldName,\'' + TrNgGrid.columnSortNormalOrderCssClass + '\':gridOptions.orderBy==columnOptions.fieldName&&!gridOptions.orderByReverse,\'' + TrNgGrid.columnSortReverseOrderCssClass + '\':gridOptions.orderBy==columnOptions.fieldName&&gridOptions.orderByReverse}" >' + '  </div>' + '</div>');
         }
-        if (!$templateCache.put(TrNgGrid.cellFooterTemplateId)) {
+        if (!$templateCache.get(TrNgGrid.cellFooterTemplateId)) {
             $templateCache.put(TrNgGrid.cellFooterTemplateId, '<div class="' + TrNgGrid.footerCssClass + '" ng-switch="isCustomized">' + '  <div ng-switch-when="true">' + '    <div ng-transclude=""></div>' + '  </div>' + '  <div ng-switch-default>' + '    <span ' + TrNgGrid.globalFilterDirectiveAttribute + '=""></span>' + '    <span ' + TrNgGrid.pagerDirectiveAttribute + '=""></span>' + '  </div>' + '</div>');
         }
         if (!$templateCache.get(TrNgGrid.footerGlobalFilterTemplateId)) {
-            $templateCache.put(TrNgGrid.footerGlobalFilterTemplateId, '<span ng-show="gridOptions.enableFiltering" class="pull-left form-group">' + '  <input class="form-control" type="text" ng-model="gridOptions.filterBy" ng-keypress="speedUpAsyncDataRetrieval($event)" ng-attr-placeholder="{{\'Search\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}"></input>' + '</span>');
+            ngElem = angular.element(
+                '<span ng-show="gridOptions.enableFiltering" class="pull-left form-group">' +
+                '  <input class="form-control" type="text" ng-model="gridOptions.filterBy" ng-keypress="speedUpAsyncDataRetrieval($event)" ng-attr-placeholder="{{\'Search\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}"></input>' +
+                '</span>');
+
+            // add magnifier icon to global search input
+            ngElem.removeClass("form-group")
+                .addClass("input-group")
+                .prepend("<span class='input-group-addon'><i class='glyphicon glyphicon-search'></i></span>");
+            $templateCache.put(TrNgGrid.footerGlobalFilterTemplateId, ngElem[0].outerHTML);
         }
         if (!$templateCache.get(TrNgGrid.footerPagerTemplateId)) {
-            $templateCache.put(TrNgGrid.footerPagerTemplateId, '<span class="pull-right form-group">' + ' <ul class="pagination">' + '   <li ng-class="{disabled:!pageCanGoBack}" ng-if="extendedControlsActive">' + '     <a href="" ng-click="pageCanGoBack&&navigateToPage(0)" ng-attr-title="{{\'First Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' + '         <span>&laquo;</span>' + '     </a>' + '   </li>' + '   <li ng-class="{disabled:!pageCanGoBack}" ng-if="extendedControlsActive">' + '     <a href="" ng-click="pageCanGoBack&&navigateToPage(gridOptions.currentPage - 1)" ng-attr-title="{{\'Previous Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' + '         <span>&lsaquo;</span>' + '     </a>' + '   </li>' + '   <li ng-if="pageSelectionActive" ng-repeat="pageIndex in pageIndexes track by $index" ng-class="{disabled:pageIndex===null, active:pageIndex===gridOptions.currentPage}">' + '      <span ng-if="pageIndex===null">...</span>' + '      <a href="" ng-click="navigateToPage(pageIndex)" ng-if="pageIndex!==null" ng-attr-title="{{\'Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">{{pageIndex+1}}</a>' + '   </li>' + '   <li ng-class="{disabled:!pageCanGoForward}" ng-if="extendedControlsActive">' + '     <a href="" ng-click="pageCanGoForward&&navigateToPage(gridOptions.currentPage + 1)" ng-attr-title="{{\'Next Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' + '         <span>&rsaquo;</span>' + '     </a>' + '   </li>' + '   <li ng-class="{disabled:!pageCanGoForward}" ng-if="extendedControlsActive">' + '     <a href="" ng-click="pageCanGoForward&&navigateToPage(lastPageIndex)" ng-attr-title="{{\'Last Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' + '         <span>&raquo;</span>' + '     </a>' + '   </li>' + '   <li class="disabled" style="white-space: nowrap;">' + '     <span ng-hide="totalItemsCount">{{\'No items to display\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}</span>' + '     <span ng-show="totalItemsCount" ng-attr-title="{{\'Select Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' + '       {{startItemIndex+1}} - {{endItemIndex+1}} {{\'displayed\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}' + '       <span>, {{totalItemsCount}} {{\'in total\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}</span>' + '     </span > ' + '   </li>' + ' </ul>' + '</span>');
+            ngElem = angular.element(
+                '<span class="pull-right form-group">' +
+                ' <ul class="pagination">' +
+                '   <li ng-class="{disabled:!pageCanGoBack}" ng-if="extendedControlsActive">' +
+                '     <a href="" ng-click="pageCanGoBack&&navigateToPage(0)" ng-attr-title="{{\'First Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' +
+                '         <span>&laquo;</span>' +
+                '     </a>' + '   </li>' +
+                '   <li ng-class="{disabled:!pageCanGoBack}" ng-if="extendedControlsActive">' +
+                '     <a href="" ng-click="pageCanGoBack&&navigateToPage(gridOptions.currentPage - 1)" ng-attr-title="{{\'Previous Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' +
+                '         <span>&lsaquo;</span>' +
+                '     </a>' +
+                '   </li>' +
+                '   <li ng-if="pageSelectionActive" ng-repeat="pageIndex in pageIndexes track by $index" ng-class="{disabled:pageIndex===null, active:pageIndex===gridOptions.currentPage}">' +
+                '      <span ng-if="pageIndex===null">...</span>' +
+                '      <a href="" ng-click="navigateToPage(pageIndex)" ng-if="pageIndex!==null" ng-attr-title="{{\'Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">{{pageIndex+1}}</a>' +
+                '   </li>' +
+                '   <li ng-class="{disabled:!pageCanGoForward}" ng-if="extendedControlsActive">' +
+                '     <a href="" ng-click="pageCanGoForward&&navigateToPage(gridOptions.currentPage + 1)" ng-attr-title="{{\'Next Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' +
+                '         <span>&rsaquo;</span>' +
+                '     </a>' +
+                '   </li>' +
+                '   <li ng-class="{disabled:!pageCanGoForward}" ng-if="extendedControlsActive">' +
+                '     <a href="" ng-click="pageCanGoForward&&navigateToPage(lastPageIndex)" ng-attr-title="{{\'Last Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' +
+                '         <span>&raquo;</span>' +
+                '     </a>' +
+                '   </li>' +
+                '   <li class="disabled" style="white-space: nowrap;">' +
+                '     <span ng-hide="totalItemsCount">{{\'No items to display\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}</span>' +
+                '     <span ng-show="totalItemsCount" ng-attr-title="{{\'Select Page\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}">' +
+                '       {{startItemIndex+1}} - {{endItemIndex+1}} {{\'displayed\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}' +
+                '       <span>, {{totalItemsCount}} {{\'in total\'|' + TrNgGrid.translateFilter + ':gridOptions.locale}}</span>' +
+                '     </span > ' +
+                '   </li>' +
+                ' </ul>' +
+                '</span>');
+
+            // remove entity amount info from pager
+            ngElem.find(".pagination li:last").remove();
+            $templateCache.put(TrNgGrid.footerPagerTemplateId, ngElem[0].outerHTML);
         }
     }
 })(TrNgGrid || (TrNgGrid = {}));
-//# sourceMappingURL=trNgGrid.js.map

@@ -75,7 +75,7 @@ var TrNgGrid;
     TrNgGrid.columnFilterDirectiveAttribute = "tr-ng-grid-column-filter";
     TrNgGrid.columnFilterTemplateId = columnFilterDirective + ".html";
 
-    
+
 
     var findChildByTagName = function (parent, childTag) {
         childTag = childTag.toUpperCase();
@@ -669,7 +669,7 @@ var TrNgGrid;
                     formattedItems.push(outputItem);
                 }
                 for (var gridColumnDefIndex = 0; gridColumnDefIndex < gridColumnDefs.length; gridColumnDefIndex++) {
-                    try  {
+                    try {
                         var gridColumnDef = gridColumnDefs[gridColumnDefIndex];
                         var fieldName = gridColumnDef.fieldName;
                         if (fieldName) {
@@ -794,7 +794,7 @@ var TrNgGrid;
 
                     //allow arrays to be changed: if(!isArray){
                     var compiledAttrGetter = null;
-                    try  {
+                    try {
                         compiledAttrGetter = this.$parse(attrs[propName]);
                     } catch (ex) {
                         // angular fails to parse literal bindings '@', thanks angular team
@@ -812,7 +812,7 @@ var TrNgGrid;
                         if (compiledAttrSetter) {
                             // a setter exists for the property, which means it's safe to mirror the internal prop on the external scope
                             internalScope.$watch(scopeTargetIdentifier + "." + propName, function (newValue, oldValue) {
-                                try  {
+                                try {
                                     // debugMode && this.log("Property '" + propName + "' changed on the internal scope from " + oldValue + " to " + newValue + ". Mirroring the parameter's value on the external scope.");
                                     externalScope[propName] = newValue;
                                     // Update: Don't do this, as you'll never hit the real scope the property was defined on
@@ -837,87 +837,87 @@ var TrNgGrid;
     })();
 
     angular.module("trNgGrid", []).directive(tableDirective, [function () {
-            return {
-                restrict: 'A',
-                scope: {
-                    items: '=',
-                    selectedItems: '=?',
-                    filterBy: '=?',
-                    filterByFields: '=?',
-                    orderBy: '=?',
-                    orderByReverse: '=?',
-                    pageItems: '=?',
-                    currentPage: '=?',
-                    totalItems: '=?',
-                    enableFiltering: '=?',
-                    enableSorting: '=?',
-                    enableSelections: '=?',
-                    enableMultiRowSelections: '=?',
-                    selectionMode: '@',
-                    locale: '@',
-                    onDataRequired: '&',
-                    onDataRequiredDelay: '=?',
-                    fields: '=?'
-                },
-                template: function (templateElement, tAttrs) {
-                    templateElement.addClass(TrNgGrid.tableCssClass);
+        return {
+            restrict: 'A',
+            scope: {
+                items: '=',
+                selectedItems: '=?',
+                filterBy: '=?',
+                filterByFields: '=?',
+                orderBy: '=?',
+                orderByReverse: '=?',
+                pageItems: '=?',
+                currentPage: '=?',
+                totalItems: '=?',
+                enableFiltering: '=?',
+                enableSorting: '=?',
+                enableSelections: '=?',
+                enableMultiRowSelections: '=?',
+                selectionMode: '@',
+                locale: '@',
+                onDataRequired: '&',
+                onDataRequiredDelay: '=?',
+                fields: '=?'
+            },
+            template: function (templateElement, tAttrs) {
+                templateElement.addClass(TrNgGrid.tableCssClass);
 
-                    // at this stage, no elements can be bound
-                    angular.forEach(templateElement.children(), function (childElement) {
-                        childElement = angular.element(childElement);
-                        childElement.attr("ng-non-bindable", "");
-                    });
-                },
-                controller: ["$compile", "$parse", "$timeout", "$templateCache", GridController],
-                compile: function (templateElement, tAttrs) {
-                    return {
-                        pre: function (isolatedScope, instanceElement, tAttrs, controller, transcludeFn) {
-                            controller.discoverTemplates(instanceElement);
-                        },
-                        post: function (isolatedScope, instanceElement, tAttrs, controller, transcludeFn) {
-                            var gridScope = controller.setupScope(isolatedScope, instanceElement, tAttrs);
-                            gridScope.speedUpAsyncDataRetrieval = function ($event) {
-                                return controller.speedUpAsyncDataRetrieval($event);
-                            };
+                // at this stage, no elements can be bound
+                angular.forEach(templateElement.children(), function (childElement) {
+                    childElement = angular.element(childElement);
+                    childElement.attr("ng-non-bindable", "");
+                });
+            },
+            controller: ["$compile", "$parse", "$timeout", "$templateCache", GridController],
+            compile: function (templateElement, tAttrs) {
+                return {
+                    pre: function (isolatedScope, instanceElement, tAttrs, controller, transcludeFn) {
+                        controller.discoverTemplates(instanceElement);
+                    },
+                    post: function (isolatedScope, instanceElement, tAttrs, controller, transcludeFn) {
+                        var gridScope = controller.setupScope(isolatedScope, instanceElement, tAttrs);
+                        gridScope.speedUpAsyncDataRetrieval = function ($event) {
+                            return controller.speedUpAsyncDataRetrieval($event);
+                        };
 
-                            gridScope.orderByValueExtractor = function (fieldName) {
-                                if (!fieldName || !gridScope.gridOptions.gridColumnDefs)
+                        gridScope.orderByValueExtractor = function (fieldName) {
+                            if (!fieldName || !gridScope.gridOptions.gridColumnDefs)
+                                return undefined;
+
+                            // we'll need the column options
+                            var columnOptions = null;
+                            for (var columnOptionsIndex = 0; (columnOptionsIndex < gridScope.gridOptions.gridColumnDefs.length) && ((columnOptions = gridScope.gridOptions.gridColumnDefs[columnOptionsIndex]).fieldName !== fieldName) ; columnOptions = null, columnOptionsIndex++)
+                                ;
+
+                            return function (item) {
+                                if (!columnOptions) {
                                     return undefined;
+                                }
 
-                                // we'll need the column options
-                                var columnOptions = null;
-                                for (var columnOptionsIndex = 0; (columnOptionsIndex < gridScope.gridOptions.gridColumnDefs.length) && ((columnOptions = gridScope.gridOptions.gridColumnDefs[columnOptionsIndex]).fieldName !== fieldName); columnOptions = null, columnOptionsIndex++)
-                                    ;
-
-                                return function (item) {
-                                    if (!columnOptions) {
-                                        return undefined;
-                                    }
-
-                                    var fieldValue = undefined;
-                                    try  {
-                                        // get the value associated with the original grid item
-                                        fieldValue = gridScope.$eval("item.$$_gridItem." + columnOptions.fieldName, { item: item });
+                                var fieldValue = undefined;
+                                try {
+                                    // get the value associated with the original grid item
+                                    fieldValue = gridScope.$eval("item.$$_gridItem." + columnOptions.fieldName, { item: item });
+                                } catch (ex) {
+                                }
+                                if (fieldValue === undefined) {
+                                    try {
+                                        // next try the field on the display item, in case of computed fields
+                                        fieldValue = gridScope.$eval("item." + columnOptions.displayFieldName, { item: item });
                                     } catch (ex) {
                                     }
-                                    if (fieldValue === undefined) {
-                                        try  {
-                                            // next try the field on the display item, in case of computed fields
-                                            fieldValue = gridScope.$eval("item." + columnOptions.displayFieldName, { item: item });
-                                        } catch (ex) {
-                                        }
-                                    }
+                                }
 
-                                    return fieldValue;
-                                };
+                                return fieldValue;
                             };
-                            controller.configureTableStructure(gridScope, instanceElement);
-                            controller.setupDisplayItemsArray(gridScope);
-                        }
-                    };
-                }
-            };
-        }]).directive(cellHeaderDirective, [
+                        };
+                        controller.configureTableStructure(gridScope, instanceElement);
+                        controller.setupDisplayItemsArray(gridScope);
+                    }
+                };
+            }
+        };
+    }]).directive(cellHeaderDirective, [
         function () {
             var setupColumnTitle = function (scope) {
                 if (scope.columnOptions.displayName) {
@@ -1235,7 +1235,7 @@ var TrNgGrid;
 
                 if (!translatedText) {
                     var languageIdParts = languageId.split(/[-_]/);
-                    for (var languageIdPartIndex = languageIdParts.length; (languageIdPartIndex > 0) && (!translatedText); languageIdPartIndex--) {
+                    for (var languageIdPartIndex = languageIdParts.length; (languageIdPartIndex > 0) && (!translatedText) ; languageIdPartIndex--) {
                         var subLanguageId = languageIdParts.slice(0, languageIdPartIndex).join("-");
                         var langTranslations = TrNgGrid.translations[subLanguageId];
                         if (langTranslations) {
@@ -1245,7 +1245,7 @@ var TrNgGrid;
                 }
 
                 if (!translatedText) {
-                    try  {
+                    try {
                         var externalTranslationFilter = $filter("translate");
                         if (externalTranslationFilter) {
                             translatedText = externalTranslationFilter(input);
@@ -1261,24 +1261,24 @@ var TrNgGrid;
                 return translatedText;
             };
         }]).run(function () {
-        TrNgGrid.tableCssClass = "tr-ng-grid table table-bordered table-hover"; // at the time of coding, table-striped is not working properly with selection
-        TrNgGrid.cellCssClass = "tr-ng-cell";
-        TrNgGrid.headerCellCssClass = "tr-ng-column-header " + TrNgGrid.cellCssClass;
-        TrNgGrid.bodyCellCssClass = TrNgGrid.cellCssClass;
-        TrNgGrid.columnTitleCssClass = "tr-ng-title";
-        TrNgGrid.columnSortCssClass = "tr-ng-sort";
-        TrNgGrid.columnFilterCssClass = "tr-ng-column-filter";
-        TrNgGrid.columnFilterInputWrapperCssClass = "";
-        TrNgGrid.columnSortActiveCssClass = "tr-ng-sort-active text-info";
-        TrNgGrid.columnSortInactiveCssClass = "tr-ng-sort-inactive text-muted glyphicon glyphicon-chevron-down";
-        TrNgGrid.columnSortReverseOrderCssClass = "tr-ng-sort-order-reverse glyphicon glyphicon-chevron-down";
-        TrNgGrid.columnSortNormalOrderCssClass = "tr-ng-sort-order-normal glyphicon glyphicon-chevron-up";
-        TrNgGrid.rowSelectedCssClass = "active";
-        TrNgGrid.footerCssClass = "tr-ng-grid-footer form-inline";
-    }).run(function () {
-        TrNgGrid.defaultColumnOptions.displayAlign = 'left';
-        TrNgGrid.defaultPagerMinifiedPageCountThreshold = 3;
-    });
+            TrNgGrid.tableCssClass = "tr-ng-grid table table-bordered table-hover"; // at the time of coding, table-striped is not working properly with selection
+            TrNgGrid.cellCssClass = "tr-ng-cell";
+            TrNgGrid.headerCellCssClass = "tr-ng-column-header " + TrNgGrid.cellCssClass;
+            TrNgGrid.bodyCellCssClass = TrNgGrid.cellCssClass;
+            TrNgGrid.columnTitleCssClass = "tr-ng-title";
+            TrNgGrid.columnSortCssClass = "tr-ng-sort";
+            TrNgGrid.columnFilterCssClass = "tr-ng-column-filter";
+            TrNgGrid.columnFilterInputWrapperCssClass = "";
+            TrNgGrid.columnSortActiveCssClass = "tr-ng-sort-active text-info";
+            TrNgGrid.columnSortInactiveCssClass = "tr-ng-sort-inactive text-muted glyphicon glyphicon-chevron-down";
+            TrNgGrid.columnSortReverseOrderCssClass = "tr-ng-sort-order-reverse glyphicon glyphicon-chevron-down";
+            TrNgGrid.columnSortNormalOrderCssClass = "tr-ng-sort-order-normal glyphicon glyphicon-chevron-up";
+            TrNgGrid.rowSelectedCssClass = "active";
+            TrNgGrid.footerCssClass = "tr-ng-grid-footer form-inline";
+        }).run(function () {
+            TrNgGrid.defaultColumnOptions.displayAlign = 'left';
+            TrNgGrid.defaultPagerMinifiedPageCountThreshold = 3;
+        });
 
     function configureTemplates($templateCache) {
         // set up default templates

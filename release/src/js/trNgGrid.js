@@ -318,7 +318,8 @@ var TrNgGrid;
                 selectionMode: SelectionMode[3 /* MultiRowWithKeyModifiers */],
                 onDataRequiredDelay: 1000,
                 noItemsText: "No items to display",
-                isLoading: false
+                isLoading: false,
+                dblClick: null
             };
             this.gridOptions.onDataRequired = $attrs["onDataRequired"] ? $isolatedScope["onDataRequired"] : null;
             this.gridOptions.gridColumnDefs = [];
@@ -504,6 +505,12 @@ var TrNgGrid;
             }
         };
 
+        GridController.prototype.dblclick = function(item, $event) {
+            if (this.gridOptions.dblClick && angular.isFunction(this.gridOptions.dblClick)) {
+                this.gridOptions.dblClick(item, $event);
+            }
+        };
+
         GridController.prototype.discoverTemplates = function (gridElement) {
             this.templatedHeader = new TemplatedSection("thead", null, null, "th", cellHeaderDirectiveAttribute);
             this.templatedBody = new TemplatedSection("tbody", bodyDirectiveAttribute, null, "td", cellBodyDirectiveAttribute);
@@ -613,6 +620,7 @@ var TrNgGrid;
 
             bodyElement.attr(bodyDirectiveAttribute, "");
             templatedBodyRowElement.attr("ng-click", "toggleItemSelection(gridItem, $event)");
+            templatedBodyRowElement.attr("ng-dblclick", "dblclick(gridItem, $event)");
 
             // when server-side get is active (scope.gridOptions.onDataRequired), the filtering through the standard filters should be disabled
             /*if (this.gridOptions.onDataRequired) {
@@ -896,7 +904,8 @@ var TrNgGrid;
                 onDataRequiredDelay: '=?',
                 fields: '=?',
                 noItemsText: '@?',
-                isLoading: '=?'
+                isLoading: '=?',
+                dblClick: '=?'
             },
             template: function (templateElement, tAttrs) {
                 templateElement.addClass(TrNgGrid.tableCssClass);
@@ -1041,6 +1050,10 @@ var TrNgGrid;
                             scope.toggleItemSelection = function (item, $event) {
                                 controller.toggleItemSelection(scope.filteredItems, item, $event);
                             };
+
+                            scope.dblclick = function(item, $event) {
+                                controller.dblclick(item, $event);
+                            }
                         }
                     };
                 }

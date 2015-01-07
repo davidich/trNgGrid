@@ -968,7 +968,7 @@ var TrNgGrid;
     }]).directive(cellHeaderDirective, [
         function () {
             var setupColumnTitle = function (scope) {
-                if (scope.columnOptions.displayName) {
+                if (scope.columnOptions.displayName !== null) {
                     scope.columnTitle = scope.columnOptions.displayName;
                 } else {
                     if (!scope.columnOptions.fieldName) {

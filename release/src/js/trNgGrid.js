@@ -319,7 +319,8 @@ var TrNgGrid;
                 onDataRequiredDelay: 1000,
                 noItemsText: "No items to display",
                 isLoading: false,
-                dblClick: null
+                dblClick: null,
+                postRenderCallback: null
             };
             this.gridOptions.onDataRequired = $attrs["onDataRequired"] ? $isolatedScope["onDataRequired"] : null;
             this.gridOptions.gridColumnDefs = [];
@@ -505,7 +506,7 @@ var TrNgGrid;
             }
         };
 
-        GridController.prototype.dblclick = function(item, $event) {
+        GridController.prototype.dblclick = function (item, $event) {
             if (this.gridOptions.dblClick && angular.isFunction(this.gridOptions.dblClick)) {
                 this.gridOptions.dblClick(item, $event);
             }
@@ -667,6 +668,12 @@ var TrNgGrid;
                 "    No items match filter criteria" +
                 "  </td>" +
                 "</tr>").insertBefore(templatedBodyRowElement);
+
+
+            // last chance to do some DOM modifications
+            if (this.gridOptions.postRenderCallback && angular.isFunction(this.gridOptions.postRenderCallback)) {
+                this.gridOptions.postRenderCallback(headerElement, bodyElement);
+            }
             // .CUSTOM CODE
 
             headerElement.replaceWith(this.$compile(headerElement)(scope));
@@ -905,7 +912,8 @@ var TrNgGrid;
                 fields: '=?',
                 noItemsText: '@?',
                 isLoading: '=?',
-                dblClick: '=?'
+                dblClick: '=?',
+                postRenderCallback: '=?'
             },
             template: function (templateElement, tAttrs) {
                 templateElement.addClass(TrNgGrid.tableCssClass);
@@ -1051,7 +1059,7 @@ var TrNgGrid;
                                 controller.toggleItemSelection(scope.filteredItems, item, $event);
                             };
 
-                            scope.dblclick = function(item, $event) {
+                            scope.dblclick = function (item, $event) {
                                 controller.dblclick(item, $event);
                             }
                         }

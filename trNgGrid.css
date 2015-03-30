@@ -1,9 +1,6 @@
-.tr-ng-grid {
-}
-
-.tr-ng-grid .tr-ng-grid-footer .pagination {
+﻿.tr-ng-grid .tr-ng-grid-footer .pagination {
   margin: 0; 
-}
+} 
 
 .tr-ng-grid > thead > tr > th {
     text-align:center;
@@ -25,9 +22,6 @@
 
 .tr-ng-grid > tbody > tr > td > .tr-ng-cell {
   overflow: visible;
-}
-
-.tr-ng-grid .tr-ng-column-header {
 }
 
 .tr-ng-grid .tr-ng-sort {
@@ -57,25 +51,11 @@
   margin-bottom: 0.1em;
 }
 
-/* CWR Customization */
-.tr-ng-grid-container .tr-ng-grid .tr-ng-column-header .tr-ng-title {
-    padding-top: 0;
-    padding-right: 14px;
+/*Additional media blocks for IE*/ 
+/* http://keithclark.co.uk/articles/moving-ie-specific-css-into-media-blocks/media-tests/ */
+@media screen\0 {
+    .tr-ng-grid .tr-ng-sort {
+        background: transparent;
+        background: rgba(255, 255, 255, 0);
+    }
 }
-
-.tr-ng-grid-container .tr-ng-grid .no-items-info-cell {
-    text-align: center;
-    font-style: italic;
-    font-weight: bold;
-    color: #AAA;
-}
-
-.tr-ng-grid-container span[tr-ng-grid-global-filter] {
-    display: inline-block;
-    margin-bottom: 8px;
-}
-
-.tr-ng-grid-container .pagination {
-    margin: 0;
-}
-/* .CWR Customization */
